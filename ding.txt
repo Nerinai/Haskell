@@ -1,5 +1,1 @@
-[["Alice", "Allen", "female", "82000"],
-["Bob", "Baker", "male", "70000"],
-["Carol", "Clarke", "female", "50000"],
-["Dan", "Davies", "male", "45000"],
-["Eve", "Evans", "female", "275000"]]
+[["First", "Last", "Gender", "Salary"],["Alice", "Allen", "female", "82000"],["Bob", "Baker", "male", "70000"],["Carol", "Clarke", "female", "50000"],["Dan", "Davies", "male", "45000"],["Eve", "Evans", "female", "275000"]]

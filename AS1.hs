@@ -1,4 +1,5 @@
-module Main where
+--module Main where
+
 
 {- This is a framework in which all functions to be written are "undefined".  -
  - Note that in most cases parameters, pattern-matching and guards have been  -
@@ -15,6 +16,7 @@ import Data.Maybe
 type Field = String
 type Row   = [Field]
 type Table = [Row]
+db = [["First", "Last", "Gender", "Salary"],["Alice", "Allen", "female", "82000"],["Bob", "Baker", "male", "70000"],["Carol", "Clarke", "female", "50000"],["Dan", "Davies", "male", "45000"],["Eve", "Evans", "female", "275000"]]
 
 -- | Main
 
@@ -58,7 +60,7 @@ columnWidths = map (maximum.map length).transpose
 
 -- * Exercise 6
 
---printTable :: Table -> [String]
+printTable :: Table -> [String]
 printTable table@(header:rows)
     = [line] ++ printrows [upheader] ++ [line] ++ printrows rows ++ [line]
       where printrows = map (printRow . zip cw)
@@ -73,10 +75,20 @@ printTable table@(header:rows)
 
 select :: Field -> Field -> Table -> Table
 select column value table@(header:rows)
-    = undefined
+     = case columnpos of
+       Nothing -> table
+       (Just x) -> header : filter (( == value).(!!x)) rows
+      where columnpos = elemIndex column header
 
 -- * Exercise 8
 
-project :: [Field] -> Table -> Table
+--project :: [Field] -> Table -> Table
 project columns table@(header:_)
-    = undefined
+    = transpose (map ((transpose table) !!) showlist)
+    where showlist = mapMaybe (`elemIndex` header) columns
+    -- = transpose (filterlist indexlist showlist)t
+          -- indexlist = zip (transpose table) [0 .. (length header) -1]
+
+-- filterlist [] _ = []
+-- filterlist (x:xs) showlist  | any (== (snd x)) showlist = (fst x) : (filterlist xs showlist)
+--                             | otherwise = filterlist xs showlist
