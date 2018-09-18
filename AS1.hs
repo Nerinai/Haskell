@@ -1,4 +1,4 @@
---module Main where
+module Main where
 
 
 {- This is a framework in which all functions to be written are "undefined".  -
@@ -16,16 +16,16 @@ import Data.Maybe
 type Field = String
 type Row   = [Field]
 type Table = [Row]
-db = [["First", "Last", "Gender", "Salary"],["Alice", "Allen", "female", "82000"],["Bob", "Baker", "male", "70000"],["Carol", "Clarke", "female", "50000"],["Dan", "Davies", "male", "45000"],["Eve", "Evans", "female", "275000"]]
+--db = [["First", "Last", "Gender", "Salary"],["Alice", "Allen", "female", "82000"],["Bob", "Baker", "male", "70000"],["Carol", "Clarke", "female", "50000"],["Dan", "Davies", "male", "45000"],["Eve", "Evans", "female", "275000"]]
 
 -- | Main
 
--- main :: IO ()
--- main = interact (lines >>> exercise >>> unlines)
---
--- exercise :: [String] -> [String]
--- exercise = parseTable >>> select "gender" "male"
---                       >>> project ["last", "first", "salary"] >>> printTable
+main :: IO ()
+main = interact (lines >>> exercise >>> unlines)
+
+exercise :: [String] -> [String]
+exercise = parseTable >>> select "gender" "male"
+                      >>> project ["last", "first", "salary"] >>> printTable
 
 -- | Parsing
 
@@ -61,6 +61,7 @@ columnWidths = map (maximum.map length).transpose
 -- * Exercise 6
 
 printTable :: Table -> [String]
+printTable [] = []
 printTable table@(header:rows)
     = [line] ++ printrows [upheader] ++ [line] ++ printrows rows ++ [line]
       where printrows = map (printRow . zip cw)
@@ -74,6 +75,7 @@ printTable table@(header:rows)
 -- * Exercise 7
 
 select :: Field -> Field -> Table -> Table
+select _ _ [] = []
 select column value table@(header:rows)
      = case columnpos of
        Nothing -> table
@@ -82,9 +84,10 @@ select column value table@(header:rows)
 
 -- * Exercise 8
 
---project :: [Field] -> Table -> Table
+project :: [Field] -> Table -> Table
+project _ [] = []
 project columns table@(header:_)
-    = transpose (map ((transpose table) !!) showlist)
+    = transpose $ map (transpose table !!) showlist
     where showlist = mapMaybe (`elemIndex` header) columns
     -- = transpose (filterlist indexlist showlist)t
           -- indexlist = zip (transpose table) [0 .. (length header) -1]
