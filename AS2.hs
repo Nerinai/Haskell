@@ -8,10 +8,10 @@
 
 -}
 
-module Main where -- Rename to "Main" if you want to compile the game.
+module Assignment2 where -- Rename to "Main" if you want to compile the game.
                          -- Don't forget to rename it back when submitting!
 
-import Control.Monad
+--import Control.Monad
 
 import Data.Char
 import Data.List
@@ -129,6 +129,16 @@ testWinnerDraw = ((X,O,X),
                   (O,O,X),
                   (X,X,O))
 
+testWinnerOneMove :: Board
+testWinnerOneMove = ((X,O,X),
+                     (O,O,X),
+                     (X,B,X))
+
+testBrokenBoard :: Board
+testBrokenBoard = ((O,X,X),
+                   (O,B,X),
+                   (O,X,O))
+
 board2List :: Board -> [[Field]]
 board2List ((a,b,c),
             (d,e,f),
@@ -157,7 +167,7 @@ flatList2Board _ = error "wrong board"
 -- Exercise 7
 
 printBoard :: Board -> String
-printBoard x = "+-+-+-+\n|" ++ intercalate "|\n+-+-+-+\n|" (map (intercalate "|".map show) boardlist) ++ "|\n+-+-+-+"
+printBoard x = intercalate "\n-+-+-\n" (map (intercalate "|".map show) boardlist) ++ "\n"
               where boardlist = board2List x
 
 -- | Move generation
@@ -183,43 +193,76 @@ hasWinner x | any (all (== X)) allrows = Just P1
             | any (all (== O)) allrows = Just P2
             | otherwise = Nothing
               where allrows = board2List x ++ board2List (verticals x) ++ diagonalList  (diagonals x)
-              
+
+
+isWinner :: Board -> Bool
+isWinner x = case winres of
+              Just _ -> True
+              Nothing -> False
+            where winres = hasWinner x
 
 -- Exercise 10
-
 gameTree :: Player -> Board -> Rose Board
-gameTree = undefined
+gameTree p b | [] == moves p b || isWinner b = b :> []
+             | otherwise = b :> map (gameTree (nextPlayer p)) (moves p b)
 
 -- | Game complexity
 
 -- Exercise 11
 
 gameTreeComplexity :: Int
-gameTreeComplexity = undefined
+gameTreeComplexity = leaves $ gameTree P1 emptyBoard
 
 -- | Minimax
 
 -- Exercise 12
 
 minimax :: Player -> Rose Board -> Rose Int
-minimax = undefined
+minimax p t@(_ :> _) = minimax' p p t
+
+minimax' :: Player -> Player -> Rose Board -> Rose Int
+minimax' p _ (b :> []) = case hasWinner b of
+                          Just x              -> resolve p x
+                          Nothing             ->  0 :> []
+                        where resolve z y | z == y    = 1 :> []
+                                          | otherwise = (-1) :> []
+
+minimax' p t (_ :> bs) | p == t    = maximum' ns :> bs'
+                       | otherwise = minimum' ns :> bs'
+                        where bs'  = map (minimax' p (nextPlayer t)) bs
+                              ns   = [x | x :> _ <- bs']
+
 
 -- * Lazier minimum and maximums
 
 -- Exercise 13
 
 minimum' :: [Int] -> Int
-minimum' = undefined
+minimum' (-1 : _) = -1
+minimum' (x : y : xs) | x < y = minimum' $ x : xs
+                      | otherwise = minimum' $ y : xs
+minimum' [x] = x
 
 maximum' :: [Int] -> Int
-maximum' = undefined
+maximum' (1 : _) = 1
+maximum' (x : y : xs) | x > y = maximum' $ x : xs
+                      | otherwise = maximum' $ y : xs
+maximum' [x] = x
+
 
 -- | Gameplay
 
 -- Exercise 14
 
 makeMove :: Player -> Board -> Maybe Board
-makeMove = undefined
+makeMove p b | isWinner b = Nothing
+             | otherwise = case zet of
+                  [] -> Nothing
+                  _  -> Just bestmove
+              where zet = moves p b
+                    zipmoves = zip zet ts
+                    best :> ts = minimax p (gameTree p b)
+                    (bestmove : _) = [x | (x , z :> _ ) <- zipmoves, z == best]
 
 -- | Main
 
@@ -228,7 +271,6 @@ data PlayerType = Human | Computer
 instance Show PlayerType where
     show Human    = "H"
     show Computer = "C"
-
 main :: IO ()
 main = do
     typeOfP1 <- askFor "Should Player 1 be a (H)uman or a (C)omputer player?"
@@ -244,7 +286,7 @@ main = do
         gameLoop p b = do
             putStrLn ("\n" ++ printBoard b)
             case hasWinner b of
-                Just p  -> putStrLn (show p ++ " has won!")
+                Just z  -> putStrLn (show z ++ " has won!")
                 Nothing -> do
                     putStr   ("It's " ++ show p ++ "'s turn. ")
                     mb' <- case playerType p of
@@ -256,15 +298,13 @@ main = do
                         Just b' -> gameLoop (nextPlayer p) b'
 
         humanMove :: Player -> Board -> IO (Maybe Board)
-        humanMove p b = do
-            let possibleMoves = moves p b
-            if null possibleMoves then
-                return Nothing
-            else do
-                putStrLn "Possible moves are:"
-                putStrLn (listMoves possibleMoves)
-                i <- askFor "Make your choice:" [1..length possibleMoves]
-                return (Just (possibleMoves !! (i-1)))
+        humanMove p b =
+            case moves p b of
+              [] -> return Nothing
+              possibleMoves -> do putStrLn "Possible moves are:"
+                                  putStrLn (listMoves possibleMoves)
+                                  i <- askFor "Make your choice:" [1 .. length possibleMoves]
+                                  return (Just (possibleMoves !! (i - 1)))
 
         computerMove :: Player -> Board -> IO (Maybe Board)
         computerMove p b = do
@@ -275,8 +315,8 @@ main = do
         listMoves = intercalate "\n"
                     . map (intercalate "    ")
                     . transpose
-                    . map lines
-                    . map (\(i,b) -> "(" ++ show i ++ "): \n" ++ printBoard b)
+                    . map (lines
+                      . (\ (i, b) -> "(" ++ show i ++ "): \n" ++ printBoard b))
                     . zip [1 :: Integer ..]
 
     gameLoop P1 emptyBoard
